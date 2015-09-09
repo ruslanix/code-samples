@@ -1,4 +1,4 @@
 code-samples
 ============
 
-code-sample
+Each folder contains README file with basic information about sample.
