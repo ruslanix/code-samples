@@ -17,6 +17,6 @@ CatalogParser/Tests - unit tests for catalog parser
 
 Entry Point:
 
-RozetkaCommand.php
+Application\CatalogParser\Command\RozetkaCommand.php
 
 UPDATE: currently I would suggest to use http://symfony.com/doc/current/components/dom_crawler.html to extract data from html page
