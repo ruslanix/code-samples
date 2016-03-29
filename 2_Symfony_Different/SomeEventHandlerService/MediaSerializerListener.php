@@ -6,6 +6,9 @@ use JMS\Serializer\EventDispatcher\ObjectEvent;
 
 use Mesh\RestBundle\Services\MediaThumbnailManager;
 
+/**
+ * Add thumbnails urls to Image entity
+ */
 class MediaSerializerListener implements EventSubscriberInterface
 {
     /**
