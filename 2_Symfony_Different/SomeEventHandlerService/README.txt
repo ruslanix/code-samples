@@ -1,1 +1,1 @@
-Example of service which encapsulates logic for some event processing
+Example of services which encapsulate logic for event processing
