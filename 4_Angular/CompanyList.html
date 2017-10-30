@@ -1,0 +1,49 @@
+<div>
+    <h4>{{'Company List' | translate}}</h4>
+    <br>
+    <div class="hpanel">
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-sm-4">
+                </div>
+                <div class="col-sm-4">
+                    <button type="button" class="btn btn-primary xxx-m-b-sm xxx-ssm-m-b-none pull-right"
+                            ng-if="ctrl.isFiltered()" ng-click="ctrl.clearAllFilters()" translate>
+                        Clear all filters
+                    </button>
+                </div>
+                <div class="col-sm-4">
+                    <div class="form-group w-xxl pull-right">
+                        <div class="input-group">
+                            <input ng-model="ctrl.requestOptions.search"
+                                   ng-change="ctrl.gridHelper.onFilter()"
+                                   ng-model-options="{ debounce: { 'default': 350, 'blur': 0 } }"
+                                   class="form-control"
+                                   type="text"
+                                   placeholder="{{'Search' | translate}}"/>
+                            <span class="input-group-addon"><i class="pe-lg pe-7s-search"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div ng-if="!ctrl.gridOptions.data.length && ctrl.firstDataReceived" class="alert alert-danger" style="margin-bottom: 20px;">
+                        <i class="fa fa-meh-o"></i> {{'No companies found' | translate}}
+                    </div>
+
+                    <div xxx-loader="ctrl.loadingPromise">
+                        <div xxx-ui-grid="ctrl.gridOptions" api="ctrl.gridApi">
+                            <div ui-grid-auto-resize ui-grid="ctrl.gridOptions"
+                                 class="grid" ng-style="ctrl.getTableStyle()"></div>
+                        </div>
+                    </div>
+
+                    <pagination ng-if="ctrl.firstDataReceived && ctrl.gridOptions.total" total-items="ctrl.gridOptions.total" first-text="{{'First Page' | translate}}" last-text="{{'Last Page' | translate}}" previous-text="{{'Previous' | translate}}" next-text="{{'Next' | translate}}" rotate="false" items-per-page="{{ ctrl.requestOptions.perPage }}" boundary-links="true" max-size="10" ng-change="ctrl.gridHelper.onPagination()" ng-model="ctrl.requestOptions.page"></pagination>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
