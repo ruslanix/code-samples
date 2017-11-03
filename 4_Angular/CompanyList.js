@@ -53,8 +53,8 @@
         enableSorting: false,
         enableColumnMenu: false
       }, {
-        field: 'mengineProfile.id',
-        displayName: $translate.instant('Mengine profile ID'),
+        field: 'appProfile.id',
+        displayName: $translate.instant('App profile ID'),
         enableSorting: false,
         enableColumnMenu: false
       }, {
