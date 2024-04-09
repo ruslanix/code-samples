@@ -1,0 +1,332 @@
+service:
+  name: dpss-document-collab
+
+plugins:
+  - serverless-webpack
+  - serverless-dotenv-plugin
+  - serverless-dynamodb-local
+  - serverless-offline-dynamodb-streams
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+  stage: ${env:STACK_STAGE}
+  region: ${env:STACK_REGION}
+  iamRoleStatements:
+    # - Effect: Allow
+    #   Action:
+    #     - "execute-api:ManageConnections"
+    #   Resource:
+    #     - "arn:aws:execute-api:*:*:**/@connections/*"
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:GetItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:BatchGetItem
+        - dynamodb:BatchWriteItem
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:DescribeStream
+        - dynamodb:GetRecords
+        - dynamodb:GetShardIterator
+        - dynamodb:ListStreams
+      Resource:
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${env:AWS_DYNAMODB_DOCUMENTS_TABLE}*"
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${env:AWS_DYNAMODB_DOCUMENT_EDIT_EVENTS_TABLE}*"
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${env:AWS_DYNAMODB_CONNECTED_CLIENTS_TABLE}*"
+        - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${env:AWS_DYNAMODB_PAYLOAD_CHUNKS_TABLE}*"
+
+  websocketApiRouteSelectionExpression: $request.body.action
+  environment:
+    API_GATEWAY_MANAGEMENT_API_ENDPOINT:
+      # https://forum.serverless.com/t/reference-websocket-api-url-in-serverless-yml/7829
+      # https://stackoverflow.com/questions/abcdefg/need-to-configure-serverless-resource-output-to-get-api-gateway-api-id
+      Fn::Join:
+        - ''
+        - - 'https://'
+          - Ref: 'WebsocketsApi'
+          - '.execute-api.'
+          - ${env:STACK_REGION}
+          - '.amazonaws.com'
+          - '/'
+          - ${env:STACK_STAGE}
+
+resources:
+  Resources:
+    DocumentsTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${env:AWS_DYNAMODB_DOCUMENTS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        KeySchema:
+          - AttributeName: urn
+            KeyType: HASH
+        AttributeDefinitions:
+          - AttributeName: urn
+            AttributeType: S
+          # - AttributeName: content
+          #   AttributeType: S
+          # - AttributeName: version
+          #   AttributeType: N
+    DocumentEditEventsTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${env:AWS_DYNAMODB_DOCUMENT_EDIT_EVENTS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
+        TimeToLiveSpecification:
+            AttributeName: ttl
+            Enabled: true
+        KeySchema:
+          - AttributeName: documentUrn
+            KeyType: HASH
+          - AttributeName: sessionVersion
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: byVersion
+            Projection:
+              ProjectionType: ALL
+            KeySchema:
+              - AttributeName: documentUrn
+                KeyType: HASH
+              - AttributeName: version
+                KeyType: RANGE
+        AttributeDefinitions:
+          - AttributeName: documentUrn
+            AttributeType: S
+          - AttributeName: sessionVersion
+            AttributeType: S
+          - AttributeName: version
+            AttributeType: N
+          # - AttributeName: date
+          #   AttributeType: S
+          # - AttributeName: eventType
+          #   AttributeType: S
+          # - AttributeName: event
+          #   AttributeType: S
+          # - AttributeName: ttl
+          #   AttributeType: N
+    ConnectedClientsTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${env:AWS_DYNAMODB_CONNECTED_CLIENTS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        TimeToLiveSpecification:
+            AttributeName: ttl
+            Enabled: true
+        KeySchema:
+          - AttributeName: connectionId
+            KeyType: HASH
+          - AttributeName: documentUrn
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: byDocumentUrn
+            Projection:
+              ProjectionType: ALL
+            KeySchema:
+              - AttributeName: documentUrn
+                KeyType: HASH
+        AttributeDefinitions:
+          - AttributeName: connectionId
+            AttributeType: S
+          - AttributeName: documentUrn
+            AttributeType: S
+          # - AttributeName: identity
+          #   AttributeType: S
+          # - AttributeName: displayName
+          #   AttributeType: S
+          # - AttributeName: cursosPosition
+          #   AttributeType: N
+          # - AttributeName: ttl
+          #   AttributeType: N
+
+    PayloadChunksTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        TableName: ${env:AWS_DYNAMODB_PAYLOAD_CHUNKS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        TimeToLiveSpecification:
+            AttributeName: ttl
+            Enabled: true
+        KeySchema:
+          - AttributeName: payloadId
+            KeyType: HASH
+          - AttributeName: idx
+            KeyType: RANGE
+        AttributeDefinitions:
+          - AttributeName: payloadId
+            AttributeType: S
+          - AttributeName: idx
+            AttributeType: N
+          # - AttributeName: data
+          #   AttributeType: S
+          # - AttributeName: ttl
+          #   AttributeType: N
+
+functions:
+
+  connectAuthorizer:
+    handler: src/handlers/connectAuthorizer.handler
+    cors: true
+
+  connect:
+    handler: src/handlers/connect.handler
+    events:
+      - websocket:
+          route: $connect
+          authorizer:
+            name: connectAuthorizer
+            identitySource:
+              - 'route.request.querystring.authToken'
+
+  ping:
+    handler: src/handlers/ping.handler
+    events:
+      - websocket:
+          route: ping
+
+  disconnect:
+    handler: src/handlers/disconnect.handler
+    events:
+      - websocket:
+          route: $disconnect
+
+  joinCollab:
+    handler: src/handlers/joinCollab.handler
+    timeout: 30 # because of possible decompression
+    events:
+      - websocket:
+          route: joinCollab
+
+  leaveCollab:
+    handler: src/handlers/leaveCollab.handler
+    events:
+      - websocket:
+          route: leaveCollab
+
+  setDocument:
+    handler: src/handlers/setDocument.handler
+    timeout: 30 # because of possible decompression
+    events:
+      - websocket:
+          route: setDocument
+
+  setCursorPosition:
+    handler: src/handlers/setCursorPosition.handler
+    events:
+      - websocket:
+          route: setCursorPosition
+
+  addChanges:
+    handler: src/handlers/addChanges.handler
+    timeout: 30 # because of possible decompression
+    events:
+      - websocket:
+          route: addChanges
+
+  sendEvent:
+    handler: src/handlers/sendEvent.handler
+    events:
+      - websocket:
+          route: sendEvent
+
+  getChanges:
+    handler: src/handlers/getChanges.handler
+    events:
+      - websocket:
+          route: getChanges
+
+  getUsers:
+    handler: src/handlers/getConnectedUsers.handler
+    events:
+      - websocket:
+          route: getUsers
+
+  documentsStream:
+    handler: src/handlers/documentsStream.handler
+    events:
+      - stream:
+          type: dynamodb
+          enabled: true
+          arn:
+            Fn::GetAtt: [DocumentsTable, StreamArn]
+
+  documentEditEventsStream:
+    handler: src/handlers/documentEditEventsStream.handler
+    events:
+      - stream:
+          type: dynamodb
+          enabled: true
+          arn:
+            Fn::GetAtt: [DocumentEditEventsTable, StreamArn]
+
+  connectedClientsStream:
+    handler: src/handlers/connectedClientsStream.handler
+    events:
+      - stream:
+          type: dynamodb
+          enabled: true
+          arn:
+            Fn::GetAtt: [ConnectedClientsTable, StreamArn]
+
+Outputs:
+  DocumentsTableArn:
+    Value:
+      Fn::GetAtt:
+        - DocumentsTable
+        - Arn
+    Export:
+      Name: ${env:STACK_ID}-DocumentsTableArn
+  DocumentEditEventsTableArn:
+    Value:
+      Fn::GetAtt:
+        - DocumentEditEventsTable
+        - Arn
+    Export:
+      Name: ${env:STACK_ID}-DocumentEditEventsTableArn
+  ConnectedClientsTableArn:
+    Value:
+      Fn::GetAtt:
+        - ConnectedClientsTable
+        - Arn
+    Export:
+      Name: ${env:STACK_ID}-ConnectedClientsTableArn
+
+custom:
+  dynamodb:
+    stages:
+      - dev
+      - test
+    start:
+      port: 6103
+      heapInitial: 200m
+      heapMax: 1g
+      migrate: true
+      convertEmptyValues: true
+  serverless-offline:
+    port: 6100
+  webpack:
+    packager: 'npm'
+  serverless-offline-dynamodb-streams:
+    endpoint: ${env:AWS_DYNAMODB_ENDPOINT}
+    region: ${self:provider.region}
+    skipCacheInvalidation: false
+    readInterval: 5000

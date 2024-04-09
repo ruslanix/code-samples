@@ -1,10 +1,11 @@
-# Ruslan Kovalenko PHP/Symfony/JS Code samples
+# Ruslan Kovalenko PHP / Symfony / Laravel / JS Code samples
 
-Good day.
-This is the repository of my code samples.
-Each folder contains README file with basic information and main ideas behind of the sample.
+Hello there!
+This is the repository for my code examples.
+Most folders have a README file containing basic information about the sample code and its main ideas.
 
-Please check my site [ruslanix.com](http://ruslanix.com) to get more information about me and links to my Linkedin and Upwork profiles.
+Please check my links to get more information about me:
+- [Upwork](https://upwork.com/freelancers/~01131138d36f4e60b9)
+- [Linkedin](https://linkedin.com/in/ruslanix)
 
-> P.S. some of the code could be outdated. But I don't want to remove it for the sake of history.
-
+P.S. Perhaps some of the code is out of date, but I don't want to delete it for the sake of preserving history.

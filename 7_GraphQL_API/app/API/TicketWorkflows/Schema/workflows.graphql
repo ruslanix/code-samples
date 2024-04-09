@@ -1,0 +1,61 @@
+extend type Query {
+  ticketWorkflows(filter: TicketWorklowsFilterInput): [TicketWorkflow!]!
+  ticketWorkflow(id: ID!): TicketWorkflow!
+}
+
+extend type Mutation {
+  createTicketWorkflow(workflow: TicketWorkflowInput!): TicketWorkflow!
+  updateTicketWorkflow(id: ID!, workflow: TicketWorkflowInput): TicketWorkflow!
+  deleteTicketWorkflow(id: ID!): TicketWorkflow!
+  restoreTicketWorkflow(id: ID!): TicketWorkflow!
+
+  createWorkflowDraftRevision(workflowId: ID!, flowChart: FlowChartInput!): TicketWorkflow!
+    @dpValidator
+  updateWorkflowDraftRevision(workflowId: ID!, flowChart: FlowChartInput!): TicketWorkflow!
+    @dpValidator
+  publishWorkflowDraftRevision(workflowId: ID!): TicketWorkflow! @dpValidator
+}
+
+input TicketWorklowsFilterInput {
+  ids: [ID!]
+  isDeleted: Boolean
+}
+
+type TicketWorkflow {
+  id: String!
+  title: String!
+  description: String
+  activeRevision: TicketWorkflowRevision
+  draftRevision: TicketWorkflowRevision
+  allRevisions(page: Int, perPage: Int, sortOrder: SortOrder): PagedTicketWorkflowRevisions!
+  created_at: DateTimeUtc!
+  updated_at: DateTimeUtc!
+  deleted_at: DateTimeUtc
+}
+
+type TicketWorkflowRevision {
+  id: String!
+  flowChart: FlowChart!
+  created_at: DateTimeUtc!
+}
+
+type PagedTicketWorkflowRevisions {
+  totalCount: Int!
+  results: [TicketWorkflowRevision!]
+  pageInfo: PagedPageInfo!
+}
+
+input TicketWorkflowInput @dpValidator {
+  title: String!
+  description: String
+}
+
+type FlowChart {
+  nodes: JSON!
+  edges: JSON!
+}
+
+input FlowChartInput {
+  nodes: JSON!
+  edges: JSON!
+}

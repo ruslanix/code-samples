@@ -1,0 +1,28 @@
+{
+  "name": "@company/document-collab",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:offline:db": "cross-env NODE_ENV=development SLS_DEBUG=* sls --env development --stage dev dynamodb install && cross-env NODE_ENV=development SLS_DEBUG=* sls --env development --stage dev dynamodb start",
+    "dev:offline:db:remove": "cross-env NODE_ENV=development SLS_DEBUG=* sls --env development --stage dev dynamodb remove",
+    "dev:offline": "cross-env NODE_ENV=development SLS_DEBUG=* sls offline start --env development --stage dev --printOutput",
+    "dev:deploy": "cross-env NODE_ENV=development sls --env development --stage dev deploy",
+    "test": "jest --forceExit --detectOpenHandles --verbose",
+    "test-integration": "cross-env TEST_TYPE=integration NODE_ENV=test jest --forceExit --detectOpenHandles --verbose",
+    "test-integration:watch": "cross-env TEST_TYPE=integration NODE_ENV=test jest --verbose --watch",
+    "build:watch": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^8.5.1",
+    "pako": "^1.0.10"
+  },
+  "devDependencies": {
+    "cross-env": "^5.2.0",
+    "serverless": "^1.49.0",
+    "serverless-dotenv-plugin": "^2.1.1",
+    "serverless-dynamodb-local": "0.2.38",
+    "serverless-offline": "^5.10.1",
+    "serverless-offline-dynamodb-streams": "^2.0.0",
+    "serverless-webpack": "^5.3.1"
+  }
+}
