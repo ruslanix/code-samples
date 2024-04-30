@@ -40,6 +40,12 @@ docker compose run php bin/console doctrine:database:create --if-not-exists
 docker compose run php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
+Sometimes I'm getting
+```
+PHP Fatal error:  Uncaught LogicException: Symfony Runtime is missing. Try running "composer require symfony/runtime".
+```
+Usually just need to wait more seconds and then try again or try to run `docker compose run php bin/console` first
+
 Open `https://localhost` in your browser and accept the auto-generated TLS certificate.
 
 By default project run in `dev` mode.
