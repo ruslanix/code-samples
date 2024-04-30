@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block content %}
+    <h1>Please choose correct answers</h1>
+    {{ form(form) }}
+
+    <hr>
+    <p>Question № {{count_questions_answered + 1}} (from {{count_questions}})</p>
+    <br/>
+
+    <h4><a href="{{ path('quiz_abort') }}">Abort and restart</a></h4>
+{% endblock %}

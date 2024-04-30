@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block content %}
+    <h1>Quiz exception happened</h1>
+
+    <p>Dirty detailss: </p>
+    <textarea rows="10" cols="100">
+{{exception.message}}
+{% if constant('class', exception) == 'App\\Exception\\QuizValidationException' %}
+    {{ exception.errors }}
+{% endif %}
+{% if exception.wrappedException %}
+    {{ exception.wrappedException.message }}
+{% endif %}
+    </textarea>
+
+    <br>
+    <hr>
+
+    You can try to reload page or <a href="{{ path('quiz_abort') }}">Start a new quiz</a>
+{% endblock %}

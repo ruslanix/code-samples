@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block content %}
+    <h1>Results</h1>
+
+    <h2>Correctly answered questions:</h2>
+    {% if correct_questions|length %}
+        <ul>
+            {% for question in correct_questions %}
+                <li>{{ question.title|e }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        - <strong>There are no correct answers</strong>
+    {% endif%}
+
+    <h2>Incorrect questions:</h2>
+    {% if incorrect_questions|length %}
+        <ul>
+            {% for question in incorrect_questions %}
+                <li>{{ question.title|e }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        - <strong>There are no incorrect answers</strong>
+    {% endif %}
+
+    <hr>
+    <p>
+        {% if result_id %}
+            The results of your passage have been saved in our database with № <strong>{{ result_id }}</strong>
+        {% else %}
+            This shouldn't have happened but unfortunately your passage has not been saved in our database. But you can try once more :)
+        {% endif %}
+    <p>
+    <br/>
+
+    <h4><a href="{{ path('quiz_abort') }}">Start a new quiz</a></h4>
+{% endblock %}
