@@ -17,7 +17,7 @@ Docker Compose version v2.26.1-desktop.1
 
 And run Docker Desktop. My current version: `v4.29.0`
 
-Clone this repository and go to `quiz` project directory
+Clone this repository and go to `8_Quiz_Symfony_PostgreSQL_Docker` project directory
 
 ```
 git clone https://github.com/ruslanix/code-samples.git
